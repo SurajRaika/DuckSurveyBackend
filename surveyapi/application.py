@@ -7,7 +7,7 @@ from flask import Flask
 from flask_cors import CORS
 
 def create_app(app_name='SURVEY_API'):
-    app = Flask(__name__)
+    app = Flask(app_name)
     app.config.from_object('surveyapi.config.BaseConfig')
     cors = CORS(app, resources={r"*": {"origins": "*"}})
 
