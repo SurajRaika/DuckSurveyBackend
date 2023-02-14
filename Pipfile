@@ -12,6 +12,8 @@ flask-sqlalchemy = "*"
 werkzeug = "*"
 jwt = "*"
 Gunicorn = "*"
+flask-migrate = "*"
+pyjwt = "*"
 
 [dev-packages]
 

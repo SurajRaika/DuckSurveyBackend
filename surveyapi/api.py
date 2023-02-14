@@ -7,15 +7,17 @@ api.py
 from functools import wraps
 from datetime import datetime, timedelta
 from flask_cors import cross_origin
-from flask import Blueprint, jsonify, request, current_app
-
+from flask import Blueprint, jsonify, request, current_app ,send_from_directory
+import base64
+import uuid
+import os
 import jwt
 import json
-
+# from .application import create_app
 from .models import db, Survey, Question, Choice, User
 
 api = Blueprint('api', __name__)
-
+# app=create_app()
 
 
 
@@ -60,12 +62,7 @@ def token_required(f):
     return _verify
 
 
-
-
-
-  
 @api.route('/login/', methods=('POST',))
-@cross_origin(origin='http://127.0.0.1:5173/',headers=['Content- Type','Authorization'])
 def login():
     print("login")
     data = request.get_json()
@@ -81,6 +78,7 @@ def login():
         current_app.config['SECRET_KEY'],algorithm="HS256")
     # response.headers.add('Access-Control-Allow-Origin', '*')
     return jsonify({"token":token,"notification":'Login Succesfull',"authenticated":True}) 
+
 
 
 @api.route('/register/', methods=('POST',))
@@ -109,42 +107,86 @@ def register():
 @token_required
 def NewSurvey(current_user):
     data = request.get_json()
-    # print(data)
     survey = Survey(name=data['name'])
     questions = []
     for q in data['questions']:
         question = Question(text=q['text'])
         question.choices = [Choice(text=c['text']) for c in q['choices']]
         questions.append(question)
-
     survey.questions = questions
-    survey.img = data['thumnail']
+
+    if data['thumnail'].startswith('data:'):
+                img_data = data['thumnail'].split(',')[1]
+                img_data = base64.b64decode(img_data)
+                print("file_nmae",img_data)
+                file_name = f"{uuid.uuid4()}.png"
+                file_path = os.path.join("images", file_name)
+                with open(file_path, 'wb') as f:
+                    f.write(img_data)
+                survey.img = file_name
+    else:
+                survey.img=data['thumnail']
+
+
+
     survey.description = data['description']
     survey.creator = current_user
-    # print('questions',questions)
-    # print(survey.questions)
     db.session.add(survey)
     db.session.commit()
     return jsonify(''), 201
 
+# def NewSurvey(current_user):
+#     data = request.get_json()
+#     # print(data)
+#     survey = Survey(name=data['name'])
+#     questions = []
+#     for q in data['questions']:
+#         question = Question(text=q['text'])
+#         question.choices = [Choice(text=c['text']) for c in q['choices']]
+#         questions.append(question)
+
+#     survey.questions = questions
+#     survey.img = data['thumnail']
+#     survey.description = data['description']
+#     survey.creator = current_user
+#     # print('questions',questions)
+#     # print(survey.questions)
+#     db.session.add(survey)
+#     db.session.commit()
+#     return jsonify(''), 201
+
 @api.route('/Delete-Survey/<int:id>/',methods=('POST',))
 @token_required
 def DeleteSurvey(current_user,id):
-    # data = request.get_json()
-    # print(data)
-    # print('<int:id>/ :',id)
-    # print('current user :',current_user.id)
-    # survey32=Survey.query.filter_by(id=id)
-    # print(Survey.query.get(id).creator_id)
-    if (Survey.query.get(id).creator_id == current_user.id or ( current_user.email == "surajraika5sr@gmail.com" )):
-        Survey.query.filter_by(id=id).delete()
-    
-    # print(Survey.query)
-    # print('questions',questions)
-    # print(survey.questions)
-    # db.session.add(survey)
-    db.session.commit()
-    return jsonify(''), 201
+
+    if (Survey.query.get(id).creator_id == current_user.id or current_user.email == "surajraika5sr@gmail.com"):
+        survey = Survey.query.get(id)
+        questions = Question.query.filter_by(survey_id=id).all()
+        for question in questions:
+            choices = Choice.query.filter_by(question_id=question.id).all()
+            for choice in choices:
+                db.session.delete(choice)
+        for question in questions:
+            db.session.delete(question)
+        if survey.img.startswith('data:'):
+            try:
+                os.remove(os.path.join("images", survey.img))
+            except FileNotFoundError:
+                print("img not found")
+                pass
+        db.session.delete(survey)
+        db.session.commit()
+        return jsonify({'message': 'Survey has been deleted successfully.'}), 200
+    else:
+        return jsonify({'error': 'You are not authorized to delete this survey.'}), 401
+
+# def DeleteSurvey(current_user,id):
+
+#     if (Survey.query.get(id).creator_id == current_user.id or ( current_user.email == "surajraika5sr@gmail.com" )):
+#         Survey.query.filter_by(id=id).delete()
+
+#     db.session.commit()
+#     return jsonify(''), 201
 
 
 @api.route('/QuestionChoice/', methods=('POST',))
@@ -188,6 +230,7 @@ def fetch_surveys():
 
 @api.route('/surveys/<int:id>/', methods=('GET', 'PUT'))
 def survey(id):
+
     if request.method == 'GET':
         survey = Survey.query.get(id)
         Creator=User.query.get(survey.creator_id)
@@ -204,3 +247,11 @@ def survey(id):
             choice.selected = choice.selected + 1
         db.session.commit()
         return jsonify(survey.to_dict()), 201
+
+@api.route('/images/<path:filename>')
+def serve_image(filename):
+    print("images")
+    # print("images",send_from_directory('images', filename))
+
+    return send_from_directory("images",
+                               filename, as_attachment=True)
