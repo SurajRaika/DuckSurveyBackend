@@ -43,20 +43,20 @@ def token_required(f):
 
         try:
             token = auth_headers[1]
-            print('f::::',f)
+            #print('f::::',f)
             data = jwt.decode(token, current_app.config['SECRET_KEY'],algorithms="HS256")
-            # print(data)
+            # #print(data)
             # data = jwt.decode(token, current_app.config['SECRET_KEY'],algorithm="HS256")
-            # print(data)
+            # #print(data)
             user = User.query.filter_by(email=data['sub']).first()
-            print("usesr",user)
+            #print("usesr",user)
             if not user:
                 raise RuntimeError('User not found')
             return f(user, *args, **kwargs)
         except jwt.ExpiredSignatureError:
             return jsonify(expired_msg), 401 # 401 is Unauthorized HTTP status code
         except (jwt.InvalidTokenError, Exception) as e:
-            print(e)
+            #print(e)
             return jsonify(invalid_msg), 401
 
     return _verify
@@ -64,10 +64,10 @@ def token_required(f):
 
 @api.route('/login/', methods=('POST',))
 def login():
-    print("login")
+    #print("login")
     data = request.get_json()
     user = User.authenticate(**data)
-    print("login route user ",user)
+    #print("login route user ",user)
     if not user:
         return jsonify({ 'notification': 'Login Failed: Invalid credentials', 'authenticated': False }), 201
     token = jwt.encode({
@@ -83,14 +83,14 @@ def login():
 
 @api.route('/register/', methods=('POST',))
 def register():
-    print("rejister:")
+    #print("rejister:")
     data = request.get_json()
-    print(data)
+    #print(data)
     # checkuser=
     UserExist=User.query.filter_by(email=data['email']).first()
     if UserExist == None :
         user = User(**data)
-        print("register user ",user)
+        #print("register user ",user)
         db.session.add(user)
         db.session.commit()
     else:
@@ -118,7 +118,7 @@ def NewSurvey(current_user):
     if data['thumnail'].startswith('data:'):
                 img_data = data['thumnail'].split(',')[1]
                 img_data = base64.b64decode(img_data)
-                print("file_nmae",img_data)
+                #print("file_nmae",img_data)
                 file_name = f"{uuid.uuid4()}.png"
                 file_path = os.path.join("images", file_name)
                 with open(file_path, 'wb') as f:
@@ -126,9 +126,6 @@ def NewSurvey(current_user):
                 survey.img = file_name
     else:
                 survey.img=data['thumnail']
-
-
-
     survey.description = data['description']
     survey.creator = current_user
     db.session.add(survey)
@@ -137,7 +134,7 @@ def NewSurvey(current_user):
 
 # def NewSurvey(current_user):
 #     data = request.get_json()
-#     # print(data)
+#     # #print(data)
 #     survey = Survey(name=data['name'])
 #     questions = []
 #     for q in data['questions']:
@@ -149,8 +146,8 @@ def NewSurvey(current_user):
 #     survey.img = data['thumnail']
 #     survey.description = data['description']
 #     survey.creator = current_user
-#     # print('questions',questions)
-#     # print(survey.questions)
+#     # #print('questions',questions)
+#     # #print(survey.questions)
 #     db.session.add(survey)
 #     db.session.commit()
 #     return jsonify(''), 201
@@ -168,17 +165,17 @@ def DeleteSurvey(current_user,id):
                 db.session.delete(choice)
         for question in questions:
             db.session.delete(question)
-        if survey.img.startswith('data:'):
+        if not survey.img.startswith('data:'):
             try:
                 os.remove(os.path.join("images", survey.img))
-            except FileNotFoundError:
-                print("img not found")
+            except :
+                # print("img not found")
                 pass
         db.session.delete(survey)
         db.session.commit()
         return jsonify({'message': 'Survey has been deleted successfully.'}), 200
     else:
-        return jsonify({'error': 'You are not authorized to delete this survey.'}), 401
+        return jsonify({'message': 'You are not authorized to delete this survey.'}), 401
 
 # def DeleteSurvey(current_user,id):
 
@@ -191,9 +188,9 @@ def DeleteSurvey(current_user,id):
 
 @api.route('/QuestionChoice/', methods=('POST',))
 def QuestionChoice():
-    print(request)
+    #print(request)
     data = request.get_json()
-    print('data:',data)
+    #print('data:',data)
     c_id=data['choice_id']
     q_id=data['question_id']
     
@@ -213,7 +210,7 @@ def QuestionChoice():
     ADict=json.loads(question.ChoicePercent)
 
     ADict[ChoiceId]+= 1
-    print(question.ChoicePercent)
+    #print(question.ChoicePercent)
     question.ChoicePercent=json.dumps(ADict)
 
     db.session.commit()    
@@ -234,7 +231,7 @@ def survey(id):
     if request.method == 'GET':
         survey = Survey.query.get(id)
         Creator=User.query.get(survey.creator_id)
-        print(Creator,Creator.name)
+        #print(Creator,Creator.name)
         survey_dic=survey.to_dict()
         survey_dic["creator_name"]=Creator.name
         survey_dic["creator_email"]=Creator.email
@@ -250,8 +247,8 @@ def survey(id):
 
 @api.route('/images/<path:filename>')
 def serve_image(filename):
-    print("images")
-    # print("images",send_from_directory('images', filename))
+    #print("images")
+    # #print("images",send_from_directory('images', filename))
 
     return send_from_directory("images",
                                filename, as_attachment=True)

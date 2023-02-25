@@ -35,17 +35,17 @@ class User(db.Model):
 
     @classmethod
     def authenticate(cls, **kwargs):
-        print('inside of authen')
+        #print('inside of authen')
         email = kwargs.get('email')
         password = kwargs.get('password')
-        print(email,password)
+        #print(email,password)
         if not email or not password:
             return None
 
         user = cls.query.filter_by(email=email).first()
-        if user:
-            print("authen user",user)
-            print(check_password_hash(user.password, password))
+        # if user:
+            # print("authen user",user)
+            #print(check_password_hash(user.password, password))
         if not user or not check_password_hash(user.password, password):
             return None
         return user
@@ -105,7 +105,7 @@ class Choice(db.Model):
 
     # @classmethod
     # def SelectChoice(cls,**kwargs):
-    #     print('inside of authen')
+    #     #print('inside of authen')
     #     UserId=kwargs.get('id')
     #     ChoiceId=kwargs.get('question_id')
     #     if not UserId or not ChoiceId:
