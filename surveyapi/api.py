@@ -224,6 +224,11 @@ def fetch_surveys():
     return jsonify([{"name":s.name,"img":s.img,"id":s.id} for s in surveys])
 
 
+@api.route('/test/', methods=('GET',))
+def fetch_surveys():
+    return jsonify(["working"])
+
+
 
 @api.route('/surveys/<int:id>/', methods=('GET', 'PUT'))
 def survey(id):
