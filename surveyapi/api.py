@@ -225,8 +225,10 @@ def fetch_surveys():
 
 
 @api.route('/test/', methods=('GET',))
-def fetch_surveys():
-    return jsonify(["working"])
+def test_surveys():
+    data="working"
+    return jsonify({"working":data})
+
 
 
 
