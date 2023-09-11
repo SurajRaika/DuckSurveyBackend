@@ -35,5 +35,5 @@ Customize your survey by adding questions to it.
 Explore the world of surveys with DuckSurvey!
 
 
-[![Checkout Frountend Code](https://img.shields.io/badge/Checkout%20Backend%20Code-View%20on%20GitHub-brightgreen?style=for-the-badge)](https://github.com/SurajRaika/DuckSurveyFrountend)
+[![Checkout Frountend Code](https://img.shields.io/badge/Checkout%20Frountend%20Code-View%20on%20GitHub-brightgreen?style=for-the-badge)](https://github.com/SurajRaika/DuckSurveyFrountend)
 
